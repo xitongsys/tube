@@ -24,5 +24,6 @@ type Tube interface {
 	Address() string
 	Write(data []byte) (int, error)
 	Read(data []byte) (int, error)
+	Flush() error
 	Close() error
 }

@@ -10,6 +10,7 @@ type InternalTube struct {
 	pageIndex int
 	pageCnt int
 	pageData []byte
+	writeBuffer []byte
 }
 
 func (itube *InternalTube) Type() TubeType {
@@ -67,9 +68,10 @@ func (itube *InternalTube) Read(data []byte) (n int, err error) {
 		return -1, ERR_READ_FROM_WRITE_TUBE
 	}
 
-	i, ld = 0, len(data)
-	for i < ld {
-		header := itube.pageData[itube.pageIndex * PAGESIZE]
+	i, lt := 0, len(data)
+	for i < lt {
+		headerIndex := itube.pageIndex * PAGESIZE
+		header := itube.pageData[headerIndex]
 		if header == TUBEEOF {
 			err = io.EOF
 			break
@@ -77,8 +79,17 @@ func (itube *InternalTube) Read(data []byte) (n int, err error) {
 			break
 		}
 		
-		
+		ls := int(header)
+		pageDataBgn, pageDataEnd := headerIndex + PAGESIZE - ls, headerIndex + PAGESIZE
+		lc := copy(data[i:], itube.pageData[pageDataBgn:pageDataEnd])
+		itube.pageData[headerIndex] = byte(ls - lc)		
+		i += lc
 	}
+	return i, err
+}
+
+func (itube* InternalTube) Write(data []byte) (n int, err error) {
+	
 }
 
 
