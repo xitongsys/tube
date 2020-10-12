@@ -19,7 +19,7 @@ type InternalTube struct {
 	tempPageDataIndex int
 }
 
-func NewInternalTube(capacity int) Tube {
+func NewInternalTube(capacity int) *InternalTube {
 	pageCnt := (capacity + PAGESIZE - 1) / PAGESIZE
 	t := & InternalTube{
 		pageCnt: pageCnt,
