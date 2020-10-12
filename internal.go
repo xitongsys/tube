@@ -1,6 +1,9 @@
 package tube
 
-import "io"
+import (
+	"io"
+	"fmt"
+)
 
 // Page structure -- right alignment
 // Full: [0, 1, 2, 3, ...] header = PAGESIZE  tempPageDataIndex = 0
@@ -16,6 +19,9 @@ type InternalTube struct {
 	isEOF       *byte
 	pageHeaders []byte
 	pageData    []byte
+
+	//for reader only
+	eofFlag bool
 
 	//for writer only
 	tempPageDataIndex int
@@ -66,13 +72,13 @@ func (itube *InternalTube) Capacity() int {
 }
 
 func (itube *InternalTube) Read(data []byte) (n int, err error) {
-	i, lt := 0, len(data)
-	for i < lt {
-		header := itube.pageHeaders[itube.pageIndex]
-		if header == 0 {
-			break
-		}
+	if *itube.isEOF != 0 {
+		itube.eofFlag = true
+	}
 
+	i, lt := 0, len(data)
+	for i < lt && itube.pageHeaders[itube.pageIndex] != 0 {
+		header := itube.pageHeaders[itube.pageIndex]
 		ls := int(header)
 		pageDataBgn, pageDataEnd := itube.pageIndex*PAGESIZE+PAGESIZE-int(header), itube.pageIndex*PAGESIZE+PAGESIZE
 		lc := copy(data[i:], itube.pageData[pageDataBgn:pageDataEnd])
@@ -86,7 +92,7 @@ func (itube *InternalTube) Read(data []byte) (n int, err error) {
 		}
 	}
 
-	if *itube.isEOF != 0 {
+	if itube.eofFlag && i == 0 {
 		err = io.EOF
 	}
 
@@ -122,6 +128,7 @@ func (itube *InternalTube) write(data []byte) (n int, err error) {
 	}
 
 	lc := copy(itube.pageData[itube.pageIndex * PAGESIZE + lb:itube.pageIndex * PAGESIZE + PAGESIZE], data)
+	itube.pageHeaders[itube.pageIndex] = byte(PAGESIZE)
 	itube.incPageIndex()
 	itube.tempPageDataIndex = 0
 
@@ -145,9 +152,9 @@ func (itube *InternalTube) write(data []byte) (n int, err error) {
 
 func (itube *InternalTube) Flush() error {
 	if itube.tempPageDataIndex != 0 {
-		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= 0; i, j = i - 1, j - 1 {
-			ii, jj := itube.pageIndex * PAGESIZE + i, itube.pageIndex * PAGESIZE + j
-			itube.pageData[jj] = itube.pageData[ii]
+		fmt.Println(itube.tempPageDataIndex, itube.pageIndex)
+		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= itube.pageIndex * PAGESIZE; i, j = i - 1, j - 1 {
+			itube.pageData[j] = itube.pageData[i]
 		}
 
 		itube.pageHeaders[itube.pageIndex] = byte(itube.tempPageDataIndex)
