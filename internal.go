@@ -2,6 +2,9 @@ package tube
 
 import "io"
 
+// Page structure
+// Full: [0, 1, 2, 3, ...] header = PAGESIZE  tempPageDataIndex = 0
+// Partical: [....0, 1, 2, 3] header = 0, tempPageDataIndex = 4. After Flush(), header = 4, tempPageDataIndex = 0
 type InternalTube struct {
 	role    TubeRole
 	address string
@@ -104,8 +107,13 @@ func (itube *InternalTube) Write(data []byte) (n int, err error) {
 
 func (itube *InternalTube) Flush() error {
 	if itube.tempPageDataIndex != 0 {
+		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= 0; i, j = i-1, j- 1 {
+			ii, jj := itube.pageIndex * PAGESIZE + i, itube.pageIndex * PAGESIZE + j
+			itube.pageData[jj] = itube.pageData[ii]
+		}
 		itube.pageHeaders[itube.pageIndex] = byte(itube.tempPageDataIndex)
 		itube.incPageIndex()
+		itube.tempPageDataIndex = 0
 	}
 	return nil
 }
