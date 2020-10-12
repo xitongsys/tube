@@ -20,7 +20,6 @@ type Tube interface {
 	Type() TubeType
 	Role() TubeRole
 	Capacity() int
-	Size() int
 	Address() string
 	Write(data []byte) (int, error)
 	Read(data []byte) (int, error)
