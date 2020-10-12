@@ -2,13 +2,10 @@ package tube
 
 import "io"
 
-// Page structure
+// Page structure -- right alignment
 // Full: [0, 1, 2, 3, ...] header = PAGESIZE  tempPageDataIndex = 0
 // Partical: [....0, 1, 2, 3] header = 0, tempPageDataIndex = 4. After Flush(), header = 4, tempPageDataIndex = 0
 type InternalTube struct {
-	role    TubeRole
-	address string
-
 	//for reader/writer
 	pageIndex int
 	pageCnt   int
@@ -22,27 +19,29 @@ type InternalTube struct {
 	tempPageDataIndex int
 }
 
+func NewInternalTube(capacity int) Tube {
+	pageCnt := (capacity + PAGESIZE - 1) / PAGESIZE
+	t := & InternalTube{
+		pageCnt: pageCnt,
+		pageHeaders: make([]byte, pageCnt),
+		pageData: make([]byte, pageCnt * PAGESIZE),
+	}
+	return t
+}
+
 func (itube *InternalTube) Type() TubeType {
 	return INTERNAL
 }
 
-func (itube *InternalTube) Role() TubeRole {
-	return itube.role
+func (itube *InternalTube) Address() string {
+	return ""
 }
 
 func (itube *InternalTube) Capacity() int {
 	return len(itube.pageData)
 }
 
-func (itube *InternalTube) Address() string {
-	return itube.address
-}
-
 func (itube *InternalTube) Read(data []byte) (n int, err error) {
-	if itube.role != READER {
-		return -1, ERR_READ_FROM_WRITE_TUBE
-	}
-
 	i, lt := 0, len(data)
 	for i < lt {
 		header := itube.pageHeaders[itube.pageIndex]
@@ -70,7 +69,22 @@ func (itube *InternalTube) Read(data []byte) (n int, err error) {
 	return i, err
 }
 
-func (itube *InternalTube) Write(data []byte) (n int, err error) {
+//block write
+func (itube *InternalTube) Write(data []byte) (n int, err error){
+	i := 0
+	for i < len(data) {
+		if c, err := itube.write(data[i:]); err != nil {
+			return i + c, err
+
+		} else {
+			i += c
+		}
+	}
+
+	return i, nil
+}
+
+func (itube *InternalTube) write(data []byte) (n int, err error) {
 	header := itube.pageHeaders[itube.pageIndex]
 	if header != 0 {
 		return 0, ERR_TUBE_IS_FULL
@@ -107,14 +121,16 @@ func (itube *InternalTube) Write(data []byte) (n int, err error) {
 
 func (itube *InternalTube) Flush() error {
 	if itube.tempPageDataIndex != 0 {
-		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= 0; i, j = i-1, j- 1 {
+		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= 0; i, j = i-1, j - 1 {
 			ii, jj := itube.pageIndex * PAGESIZE + i, itube.pageIndex * PAGESIZE + j
 			itube.pageData[jj] = itube.pageData[ii]
 		}
+
 		itube.pageHeaders[itube.pageIndex] = byte(itube.tempPageDataIndex)
 		itube.incPageIndex()
 		itube.tempPageDataIndex = 0
 	}
+
 	return nil
 }
 
