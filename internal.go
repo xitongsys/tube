@@ -7,11 +7,13 @@ import "io"
 // Partical: [....0, 1, 2, 3] header = 0, tempPageDataIndex = 4. After Flush(), header = 4, tempPageDataIndex = 0
 type InternalTube struct {
 	//for reader/writer
-	pageIndex int
-	pageCnt   int
+	role 		TubeRole
+	pageIndex	int
+	pageCnt		int
 
 	//memory alignment
-	isEOF       byte
+	data 		[]byte
+	isEOF       *byte
 	pageHeaders []byte
 	pageData    []byte
 
@@ -19,18 +21,40 @@ type InternalTube struct {
 	tempPageDataIndex int
 }
 
-func NewInternalTube(capacity int) *InternalTube {
+func NewInternalTubeWriter(capacity int) *InternalTube {
 	pageCnt := (capacity + PAGESIZE - 1) / PAGESIZE
+	data := make([]byte, pageCnt + pageCnt * PAGESIZE + 1)
 	t := & InternalTube{
-		pageCnt: pageCnt,
-		pageHeaders: make([]byte, pageCnt),
-		pageData: make([]byte, pageCnt * PAGESIZE),
+		role:			WRITER,
+		pageCnt:		pageCnt,
+		data: 			data,
+		isEOF:			&data[0],
+		pageHeaders:	data[1:1 + pageCnt],
+		pageData: 		data[pageCnt+1:],
 	}
 	return t
 }
 
+func NewInternalTubeReader(wt *InternalTube) *InternalTube {
+	t := & InternalTube{
+		role:			READER,
+		pageCnt:		wt.pageCnt,
+		data: 			wt.data,
+		isEOF:			&wt.data[0],
+		pageHeaders:	wt.data[1:1 + wt.pageCnt],
+		pageData: 		wt.data[wt.pageCnt+1:],
+	}
+
+	return t
+}
+
+
 func (itube *InternalTube) Type() TubeType {
 	return INTERNAL
+}
+
+func (itube *InternalTube) Role() TubeRole {
+	return itube.role
 }
 
 func (itube *InternalTube) Address() string {
@@ -62,7 +86,7 @@ func (itube *InternalTube) Read(data []byte) (n int, err error) {
 		}
 	}
 
-	if itube.isEOF != 0 {
+	if *itube.isEOF != 0 {
 		err = io.EOF
 	}
 
@@ -73,7 +97,7 @@ func (itube *InternalTube) Read(data []byte) (n int, err error) {
 func (itube *InternalTube) Write(data []byte) (n int, err error){
 	i := 0
 	for i < len(data) {
-		if c, err := itube.write(data[i:]); err != nil {
+		if c, err := itube.write(data[i:]); err != nil && err != ERR_TUBE_IS_FULL {
 			return i + c, err
 
 		} else {
@@ -121,7 +145,7 @@ func (itube *InternalTube) write(data []byte) (n int, err error) {
 
 func (itube *InternalTube) Flush() error {
 	if itube.tempPageDataIndex != 0 {
-		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= 0; i, j = i-1, j - 1 {
+		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= 0; i, j = i - 1, j - 1 {
 			ii, jj := itube.pageIndex * PAGESIZE + i, itube.pageIndex * PAGESIZE + j
 			itube.pageData[jj] = itube.pageData[ii]
 		}
@@ -136,7 +160,7 @@ func (itube *InternalTube) Flush() error {
 
 func (itube *InternalTube) Close() error {
 	itube.Flush()
-	itube.isEOF = 1
+	*itube.isEOF = 1
 	return nil
 }
 

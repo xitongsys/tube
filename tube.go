@@ -18,6 +18,7 @@ const TUBEEOF byte = 255
 
 type Tube interface {
 	Type() TubeType
+	Role() TubeRole
 	Capacity() int
 	Address() string
 	Write(data []byte) (int, error)

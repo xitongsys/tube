@@ -7,8 +7,9 @@ import (
 
 
 func Test(t *testing.T) {
-	tb := NewInternalTube(1024)
-	n := 1024
+	wb := NewInternalTubeWriter(PAGESIZE * 10)
+	rb := NewInternalTubeReader(wb)
+	n := 20
 
 	wg := &sync.WaitGroup{}
 
@@ -21,11 +22,11 @@ func Test(t *testing.T) {
 		}
 
 		for i := 0; i < n; i++ {
-			tb.Write(buf)
+			c, err := wb.Write(buf)
+			t.Log("write", c, wb.pageIndex, err)
 		}
 
-		tb.Flush()
-		tb.Close()
+		wb.Close()
 
 		wg.Done()
 	}()
@@ -38,9 +39,13 @@ func Test(t *testing.T) {
 		var err error
 
 		for err == nil {
-			c, err = tb.Read(buf)
+			c, err = rb.Read(buf)
 			if c > 0 {
 				t.Log(c)
+			}
+
+			if err != nil {
+				t.Log(err)
 			}
 		}
 
