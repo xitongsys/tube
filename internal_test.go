@@ -3,19 +3,18 @@ package tube
 import (
 	"testing"
 	"sync"
-	//"math/rand"
+	"math/rand"
 	"time"
 )
-
 
 func Test(t *testing.T) {
 	wb := NewInternalTubeWriter(PAGESIZE * 10)
 	rb := NewInternalTubeReader(wb)
 
 	bgnTime0 := time.Now().UnixNano()
-	data := make([]byte, 1024 * 1024 * 1000)
+	data := make([]byte, 1024 * 1024 * 200)
 	for i := 0; i < len(data); i++ {
-		//data[i] = byte(rand.Intn(255))
+		data[i] = byte(rand.Intn(255))
 		data[i] = byte(i)
 	}
 
@@ -71,5 +70,34 @@ func Test(t *testing.T) {
 
 		t.Fatal("write != read", len(data), len(readData))
 	}
+}
+
+func Test2(t *testing.T){
+	ch := make(chan byte, 1024)
+	BN := 1024 * 1024 * 200
+	wg := &sync.WaitGroup{}
+	
+	bgnTime := time.Now().UnixNano()
+	wg.Add(1)
+	go func(){
+		for i := 0; i<BN; i++ {
+			ch <- byte(i)
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func(){
+		for i := 0; i < BN; i++ {
+			<- ch
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+	
+	endTime := time.Now().UnixNano()
+
+	t.Log((endTime - bgnTime) / 1e6)
 
 }
