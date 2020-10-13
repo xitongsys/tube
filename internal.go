@@ -38,6 +38,21 @@ func NewInternalTubeWriter(capacity int) *InternalTube {
 		pageHeaders:	data[1:1 + pageCnt],
 		pageData: 		data[pageCnt+1:],
 	}
+
+	return t
+}
+
+func NewInternalTubeWriterFromData(data []byte) *InternalTube {
+	pageCnt := len(data) / PAGESIZE
+	t := & InternalTube{
+		role:			WRITER,
+		pageCnt:		pageCnt,
+		data: 			data,
+		isEOF:			&data[0],
+		pageHeaders:	data[1:1 + pageCnt],
+		pageData: 		data[pageCnt+1:],
+	}
+
 	return t
 }
 
@@ -54,6 +69,19 @@ func NewInternalTubeReader(wt *InternalTube) *InternalTube {
 	return t
 }
 
+func NewInternalTubeReaderFromData(data []byte) *InternalTube {
+	pageCnt := len(data) / PAGESIZE
+	t := & InternalTube{
+		role:			READER,
+		pageCnt:		pageCnt,
+		data: 			data,
+		isEOF:			&data[0],
+		pageHeaders:	data[1:1 + pageCnt],
+		pageData: 		data[pageCnt+1:],
+	}
+
+	return t
+}
 
 func (itube *InternalTube) Type() TubeType {
 	return INTERNAL
