@@ -43,7 +43,7 @@ func NewInternalTubeWriter(capacity int) *InternalTube {
 }
 
 func NewInternalTubeWriterFromData(data []byte) *InternalTube {
-	pageCnt := len(data) / PAGESIZE
+	pageCnt := (len(data) - 1) / (PAGESIZE + 1)
 	t := & InternalTube{
 		role:			WRITER,
 		pageCnt:		pageCnt,
@@ -70,7 +70,7 @@ func NewInternalTubeReader(wt *InternalTube) *InternalTube {
 }
 
 func NewInternalTubeReaderFromData(data []byte) *InternalTube {
-	pageCnt := len(data) / PAGESIZE
+	pageCnt := (len(data) - 1) / (PAGESIZE + 1)
 	t := & InternalTube{
 		role:			READER,
 		pageCnt:		pageCnt,

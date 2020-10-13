@@ -18,12 +18,13 @@ func NewMmapTubeWriter(capacity int, address string) (*MmapTube, error) {
 	}
 
 	pageCnt := (capacity + PAGESIZE - 1) / PAGESIZE
+	totalSize := pageCnt * PAGESIZE + pageCnt + 1
 
-	rawBuf, err := syscall.Mmap(int(f.Fd()), 0, pageCnt * PAGESIZE, syscall.PROT_READ | syscall.PROT_WRITE, syscall.MAP_SHARED)
+	rawBuf, err := syscall.Mmap(int(f.Fd()), 0, totalSize, syscall.PROT_READ | syscall.PROT_WRITE, syscall.MAP_SHARED)
 	if err != nil {
 		return nil, err
 	}
-	f.Truncate(int64(pageCnt * PAGESIZE))
+	f.Truncate(int64(totalSize))
 
 	ptr := uintptr(unsafe.Pointer(&rawBuf[0]))
 
@@ -31,7 +32,7 @@ func NewMmapTubeWriter(capacity int, address string) (*MmapTube, error) {
 		addr uintptr
 		len int 
 		cap int
-	}{ptr, pageCnt * PAGESIZE + pageCnt + 1, pageCnt * PAGESIZE + pageCnt + 1}
+	}{ptr, totalSize, totalSize}
 
 	data := *(*[]byte)(unsafe.Pointer(&sl))
 
@@ -50,20 +51,21 @@ func NewMmapTubeReader(capacity int, address string) (*MmapTube, error) {
 	}
 
 	pageCnt := (capacity + PAGESIZE - 1) / PAGESIZE
+	totalSize := pageCnt * PAGESIZE + pageCnt + 1
 
-	rawBuf, err := syscall.Mmap(int(f.Fd()), 0, pageCnt * PAGESIZE, syscall.PROT_READ | syscall.PROT_WRITE, syscall.MAP_SHARED)
+	rawBuf, err := syscall.Mmap(int(f.Fd()), 0, totalSize, syscall.PROT_READ | syscall.PROT_WRITE, syscall.MAP_SHARED)
 	if err != nil {
 		return nil, err
 	}
-	f.Truncate(int64(pageCnt * PAGESIZE))
+	f.Truncate(int64(totalSize))
 
 	ptr := uintptr(unsafe.Pointer(&rawBuf[0]))
-	
+
 	var sl = struct {
 		addr uintptr
 		len int 
 		cap int
-	}{ptr, pageCnt * PAGESIZE + pageCnt + 1, pageCnt * PAGESIZE + pageCnt + 1}
+	}{ptr, totalSize, totalSize}
 
 	data := *(*[]byte)(unsafe.Pointer(&sl))
 
