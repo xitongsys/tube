@@ -26,8 +26,8 @@ func Test(t *testing.T) {
 		for i := 0; i < len(data); i++ {
 			j := i % BS
 			buf[j] = data[i]
-			if j == BS - 1 {
-				wb.Write(buf)
+			if j == BS - 1 || i == len(data) - 1 {
+				wb.Write(buf[:j + 1])
 			}
 		}
 		wb.Close()

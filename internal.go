@@ -2,7 +2,6 @@ package tube
 
 import (
 	"io"
-	"fmt"
 )
 
 // Page structure -- right alignment
@@ -152,7 +151,6 @@ func (itube *InternalTube) write(data []byte) (n int, err error) {
 
 func (itube *InternalTube) Flush() error {
 	if itube.tempPageDataIndex != 0 {
-		fmt.Println(itube.tempPageDataIndex, itube.pageIndex)
 		for i, j := itube.pageIndex * PAGESIZE + itube.tempPageDataIndex - 1, itube.pageIndex * PAGESIZE + PAGESIZE - 1; i >= itube.pageIndex * PAGESIZE; i, j = i - 1, j - 1 {
 			itube.pageData[j] = itube.pageData[i]
 		}
