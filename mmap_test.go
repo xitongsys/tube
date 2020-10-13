@@ -13,7 +13,7 @@ func TestMmap(t *testing.T) {
 	rb, _ := NewMmapTubeReader(capacity, address)
 
 	bgnTime0 := time.Now().UnixNano()
-	data := make([]byte, 1024 * 20)
+	data := make([]byte, 1024 * 1024 * 200)
 	for i := 0; i < len(data); i++ {
 		data[i] = byte(rand.Intn(255))
 		data[i] = byte(i)

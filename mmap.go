@@ -12,7 +12,7 @@ type MmapTube struct {
 }
 
 func NewMmapTubeWriter(capacity int, address string) (*MmapTube, error) {
-	f, err := os.OpenFile(address, os.O_CREATE | os.O_RDWR, 0644)
+	f, err := os.OpenFile(address, os.O_CREATE | os.O_RDWR | os.O_TRUNC, 0644)
 	if err != nil {
 		return nil, err
 	}
