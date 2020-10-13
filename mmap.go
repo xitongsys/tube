@@ -9,6 +9,7 @@ import (
 type MmapTube struct {
 	InternalTube
 	Address string
+	fp *os.File
 }
 
 func NewMmapTubeWriter(capacity int, address string) (*MmapTube, error) {
@@ -39,6 +40,7 @@ func NewMmapTubeWriter(capacity int, address string) (*MmapTube, error) {
 	mt := & MmapTube{
 		InternalTube: *NewInternalTubeWriterFromData(data),
 		Address: address,
+		fp: f,
 	}
 
 	return mt, nil
@@ -72,8 +74,13 @@ func NewMmapTubeReader(capacity int, address string) (*MmapTube, error) {
 	mt := & MmapTube{
 		InternalTube: *NewInternalTubeReaderFromData(data),
 		Address: address,
+		fp: f,
 	}
 
 	return mt, nil
 }
 
+func (mt *MmapTube) Close() error {
+	mt.InternalTube.Close()
+	return mt.fp.Close()
+}
