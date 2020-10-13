@@ -2,6 +2,7 @@ package tube
 
 import (
 	"io"
+	"time"
 )
 
 // Page structure -- right alignment
@@ -107,6 +108,9 @@ func (itube *InternalTube) Write(data []byte) (n int, err error){
 
 		} else {
 			i += c
+			if c == 0 {
+				time.Sleep(time.Microsecond)
+			}
 		}
 	}
 

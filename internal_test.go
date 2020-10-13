@@ -4,6 +4,7 @@ import (
 	"testing"
 	"sync"
 	"math/rand"
+	"time"
 )
 
 
@@ -11,11 +12,12 @@ func Test(t *testing.T) {
 	wb := NewInternalTubeWriter(PAGESIZE * 10)
 	rb := NewInternalTubeReader(wb)
 
-	data := make([]byte, 1024)
+	data := make([]byte, 1024 * 1024 * 100)
 	for i := 0; i < len(data); i++ {
 		data[i] = byte(rand.Intn(255))
 	}
 
+	bgnTime := time.Now().Unix()
 	wg := &sync.WaitGroup{}
 
 	//write
@@ -47,12 +49,18 @@ func Test(t *testing.T) {
 			c, err = rb.Read(buf)
 			if c > 0 {
 				readData = append(readData, buf[:c]...)
+			} else {
+				time.Sleep(time.Microsecond)
 			}
 		}
 		wg.Done()
 	}()
 	
 	wg.Wait()
+
+	endTime := time.Now().Unix()
+
+	t.Log("Time: ", endTime - bgnTime)
 
 	if string(data) != string(readData) {
 
