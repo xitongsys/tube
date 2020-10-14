@@ -9,8 +9,9 @@ import (
 
 var testSize = 1024 * 1024 * 100
 var capacity = PAGESIZE * 4 * 1024
-var readBufferSize = 1024 * 10
-var writeBufferSize = 1024 * 10
+
+var readBufferSize = 1024 * 100
+var writeBufferSize = 1024 * 100
 
 func testTube(wb, rb Tube, size int) error {
 	wg := &sync.WaitGroup{} 
@@ -80,7 +81,7 @@ func TestMmapTube(t *testing.T) {
 func TestSocketTube(t *testing.T) {
 	var err error
 	wb, _ := NewSocketTube(capacity, "127.0.0.1:33333")
-	rb, _ := NewSocketTube(capacity * 1000, "127.0.0.1:33333")
+	rb, _ := NewSocketTube(capacity, "127.0.0.1:33333")
 	if err = wb.Start(WRITER); err != nil {
 		t.Fatal(err)
 	}
