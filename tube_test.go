@@ -24,6 +24,7 @@ func testTube(wb, rb Tube, size int) error {
 				wb.Write(buf[:j + 1])
 			}
 		}
+
 		wb.Close()
 		wg.Done()
 	}()

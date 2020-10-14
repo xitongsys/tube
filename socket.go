@@ -49,10 +49,13 @@ func (st *SocketTube) Start(role TubeRole) error {
 func (st *SocketTube) startReader() (err error) {
 	st.tcpConn, err = net.Dial("tcp", st.address)
 	go func(){
-		for {
-			if _, err := io.Copy(st, st.tcpConn); err != nil {
-				return
-			}
+		defer func(){
+			st.Close()
+		}()
+
+		if _, err := io.Copy(st, st.tcpConn); err != nil {
+			st.SetError(err)
+			return
 		}
 	}()
 
@@ -85,6 +88,7 @@ func (st *SocketTube) startWriter() error {
 				}()
 
 				if _, err := io.Copy(conn, st); err != nil {
+					st.SetError(err)
 					return
 				}
 			}()
