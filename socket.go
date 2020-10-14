@@ -9,6 +9,8 @@ type SocketTube struct {
 	InternalTube
 	Address	string
 
+	role TubeRole
+
 	//for writer
 	closed	bool
 	tcpListener *net.TCPListener
@@ -27,6 +29,7 @@ func NewSocketTubeWriter(capacity int, address string) (*SocketTube, error) {
 		InternalTube: *NewInternalTubeWriter(capacity),
 		Address: address,
 		closed: false,
+		role: WRITER,
 
 	}
 
@@ -38,13 +41,14 @@ func NewSocketTubeReader(capacity int, address string) (*SocketTube, error) {
 		InternalTube: *NewInternalTubeWriter(capacity),
 		Address: address,
 		closed: false,
+		role: READER,
 	}
 
 	return st, nil
 }
 
 func (st *SocketTube) Start() error {
-	if st.Role() == READER {
+	if st.role == READER {
 		return st.startReader()
 	}
 
@@ -100,7 +104,7 @@ func (st *SocketTube) startWriter() error {
 func (st *SocketTube) Close() error {
 	st.InternalTube.Close()
 
-	if st.Role() == READER {
+	if st.role == READER {
 		return st.tcpConn.Close()
 	} else {
 		return st.tcpListener.Close()
