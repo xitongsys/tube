@@ -11,6 +11,7 @@ type TubeRole int
 const (
 	READER TubeRole = iota
 	WRITER
+	BOTH
 )
 
 const PAGESIZE int = 255

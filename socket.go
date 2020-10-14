@@ -26,7 +26,7 @@ func NewSocketTubeWriter(capacity int, address string) (*SocketTube, error) {
 	}
 
 	st := & SocketTube {
-		InternalTube: *NewInternalTubeWriter(capacity),
+		InternalTube: *NewInternalTube(capacity),
 		Address: address,
 		closed: false,
 		role: WRITER,
@@ -38,7 +38,7 @@ func NewSocketTubeWriter(capacity int, address string) (*SocketTube, error) {
 
 func NewSocketTubeReader(capacity int, address string) (*SocketTube, error) {
 	st := & SocketTube {
-		InternalTube: *NewInternalTubeWriter(capacity),
+		InternalTube: *NewInternalTube(capacity),
 		Address: address,
 		closed: false,
 		role: READER,
@@ -64,6 +64,7 @@ func (st *SocketTube) startReader() (err error) {
 			}
 		}
 	}()
+
 	return err
 }
 
@@ -109,4 +110,8 @@ func (st *SocketTube) Close() error {
 	} else {
 		return st.tcpListener.Close()
 	}
+}
+
+func (st *SocketTube) Role() TubeRole {
+	return st.role
 }
