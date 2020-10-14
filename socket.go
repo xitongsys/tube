@@ -7,7 +7,7 @@ import (
 
 type SocketTube struct {
 	InternalTube
-	Address	string
+	address	string
 
 	role TubeRole
 
@@ -27,7 +27,7 @@ func NewSocketTubeWriter(capacity int, address string) (*SocketTube, error) {
 
 	st := & SocketTube {
 		InternalTube: *NewInternalTube(capacity),
-		Address: address,
+		address: address,
 		closed: false,
 		role: WRITER,
 
@@ -39,7 +39,7 @@ func NewSocketTubeWriter(capacity int, address string) (*SocketTube, error) {
 func NewSocketTubeReader(capacity int, address string) (*SocketTube, error) {
 	st := & SocketTube {
 		InternalTube: *NewInternalTube(capacity),
-		Address: address,
+		address: address,
 		closed: false,
 		role: READER,
 	}
@@ -56,7 +56,7 @@ func (st *SocketTube) Start() error {
 }
 
 func (st *SocketTube) startReader() (err error) {
-	st.tcpConn, err = net.Dial("tcp", st.Address)
+	st.tcpConn, err = net.Dial("tcp", st.address)
 	go func(){
 		for {
 			if _, err := io.Copy(st, st.tcpConn); err != nil {
@@ -69,7 +69,7 @@ func (st *SocketTube) startReader() (err error) {
 }
 
 func (st *SocketTube) startWriter() error {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", st.Address)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", st.address)
 	if err != nil {
 		return err
 	}
@@ -114,4 +114,8 @@ func (st *SocketTube) Close() error {
 
 func (st *SocketTube) Role() TubeRole {
 	return st.role
+}
+
+func (st *SocketTube) Address() string {
+	return st.address
 }

@@ -45,10 +45,12 @@ func testTube(wb, rb Tube, size int) error {
 		wg.Done()
 	}()
 
+	wg.Wait()
+
+	fmt.Printf("Write %d Read %d\n", len(writeData), len(readData))
 	if string(writeData) != string(readData) {
 		return fmt.Errorf("not match")
 	}
-
 	return nil
 }
 
@@ -70,7 +72,6 @@ func TestMmapTube(t *testing.T) {
 }
 
 func TestSocketTube(t *testing.T) {
-	return
 	wb, _ := NewSocketTubeWriter(PAGESIZE * 10, "127.0.0.1:33333")
 	rb, _ := NewSocketTubeReader(PAGESIZE * 10, "127.0.0.1:33333")
 
