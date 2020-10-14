@@ -7,6 +7,11 @@ import (
 	"testing"
 )
 
+var testSize = 1024 * 1024 * 100
+var capacity = PAGESIZE * 4 * 1024
+var readBufferSize = 1024 * 10
+var writeBufferSize = 1024 * 10
+
 func testTube(wb, rb Tube, size int) error {
 	wg := &sync.WaitGroup{} 
 	writeData := make([]byte, 0)
@@ -14,7 +19,7 @@ func testTube(wb, rb Tube, size int) error {
 
 	wg.Add(1)
 	go func() {
-		BS := 200
+		BS := writeBufferSize
 		buf := make([]byte, BS)
 		for i := 0; i<size; i++ {
 			j := i % BS
@@ -31,7 +36,7 @@ func testTube(wb, rb Tube, size int) error {
 
 	wg.Add(1)
 	go func(){
-		BS := 150
+		BS := readBufferSize
 		buf := make([]byte, BS)
 		c := 0
 		var err error 
@@ -56,26 +61,26 @@ func testTube(wb, rb Tube, size int) error {
 }
 
 func TestInternalTube(t *testing.T) {
-	tb := NewInternalTube(PAGESIZE * 10)
-	if testTube(tb, tb, 1024 * 10) != nil {
+	tb := NewInternalTube(capacity)
+	if testTube(tb, tb, testSize) != nil {
 		t.Fatal("write != read")
 	}
 }
 
 func TestMmapTube(t *testing.T) {
-	capacity, address := PAGESIZE * 10, "/tmp/a"
+	address := "/tmp/a"
 	wb, _ := NewMmapTube(capacity, address)
 	rb, _ := NewMmapTube(capacity, address)
 
-	if testTube(wb, rb, 1024 * 10) != nil {
+	if testTube(wb, rb, testSize) != nil {
 		t.Fatal("write != read")
 	}
 }
 
 func TestSocketTube(t *testing.T) {
 	var err error
-	wb, _ := NewSocketTube(PAGESIZE * 10, "127.0.0.1:33333")
-	rb, _ := NewSocketTube(PAGESIZE * 10, "127.0.0.1:33333")
+	wb, _ := NewSocketTube(capacity, "127.0.0.1:33333")
+	rb, _ := NewSocketTube(capacity * 1000, "127.0.0.1:33333")
 	if err = wb.Start(WRITER); err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +88,7 @@ func TestSocketTube(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if testTube(wb, rb, 1024 * 10) != nil {
+	if testTube(wb, rb, testSize) != nil {
 		t.Fatal("write != read")
 	}
 }
