@@ -20,7 +20,7 @@ type SocketTube struct {
 	
 }
 
-func NewSocketTubeWriter(capacity int, address string) (*SocketTube, error) {
+func NewSocketTube(capacity int, address string) (*SocketTube, error) {
 	if _, err := net.ResolveTCPAddr("tcp", address); err != nil {
 		return nil, err
 	}
@@ -29,30 +29,21 @@ func NewSocketTubeWriter(capacity int, address string) (*SocketTube, error) {
 		InternalTube: *NewInternalTube(capacity),
 		address: address,
 		closed: false,
-		role: WRITER,
 
 	}
 
 	return st, nil
 }
 
-func NewSocketTubeReader(capacity int, address string) (*SocketTube, error) {
-	st := & SocketTube {
-		InternalTube: *NewInternalTube(capacity),
-		address: address,
-		closed: false,
-		role: READER,
-	}
-
-	return st, nil
-}
-
-func (st *SocketTube) Start() error {
-	if st.role == READER {
+func (st *SocketTube) Start(role TubeRole) error {
+	st.role = role
+	if role == READER {
 		return st.startReader()
+	} else if role == WRITER {
+		return st.startWriter()
 	}
 
-	return st.startWriter()
+	return ERR_OPERATION_NOT_SUPPORT
 }
 
 func (st *SocketTube) startReader() (err error) {
@@ -84,6 +75,8 @@ func (st *SocketTube) startWriter() error {
 			conn, err := st.tcpListener.AcceptTCP()
 			if err != nil && st.closed {
 				return
+			} else if err != nil {
+				continue
 			}
 
 			go func(){
@@ -104,6 +97,7 @@ func (st *SocketTube) startWriter() error {
 
 func (st *SocketTube) Close() error {
 	st.InternalTube.Close()
+	st.closed = true
 
 	if st.role == READER {
 		return st.tcpConn.Close()

@@ -72,8 +72,10 @@ func TestMmapTube(t *testing.T) {
 }
 
 func TestSocketTube(t *testing.T) {
-	wb, _ := NewSocketTubeWriter(PAGESIZE * 10, "127.0.0.1:33333")
-	rb, _ := NewSocketTubeReader(PAGESIZE * 10, "127.0.0.1:33333")
+	wb, _ := NewSocketTube(PAGESIZE * 10, "127.0.0.1:33333")
+	rb, _ := NewSocketTube(PAGESIZE * 10, "127.0.0.1:33333")
+	wb.Start(WRITER)
+	rb.Start(READER)
 
 	if testTube(wb, rb, 1024 * 10) != nil {
 		t.Fatal("write != read")
